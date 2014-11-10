@@ -1,0 +1,177 @@
+<html>
+	<head>
+		<meta charset="utf-8">		
+		<script src="http://openlayers.org/en/v3.0.0/build/ol.js" type="text/javascript"></script>		
+		<script src="./ol.utfgrid.js"></script>
+		<style type="text/css">		
+		  .ol-popup {
+			display: none;
+			position: absolute;
+			background-color: white;
+			-moz-box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+			-webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+			filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+			padding: 15px;
+			border-radius: 10px;
+			border: 1px solid #cccccc;
+			bottom: 12px;
+			left: -50px;
+		  }
+		  .ol-popup:after, .ol-popup:before {
+			top: 100%;
+			border: solid transparent;
+			content: " ";
+			height: 0;
+			width: 0;
+			position: absolute;
+			pointer-events: none;
+		  }
+		  .ol-popup:after {
+			border-top-color: white;
+			border-width: 10px;
+			left: 48px;
+			margin-left: -10px;
+		  }
+		  .ol-popup:before {
+			border-top-color: #cccccc;
+			border-width: 11px;
+			left: 48px;
+			margin-left: -11px;
+		  }
+		  .ol-popup-closer {
+			text-decoration: none;
+			position: absolute;
+			top: 2px;
+			right: 8px;
+		  }
+		  .ol-popup-closer:after {
+			content: "✖";
+		  }
+		  
+		  #info {
+			position:absolute;
+			bottom:10px;
+			left: 10px;				
+		  }
+		</style>		
+	</head>
+	<body>
+		<div id="map">
+			<div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>            
+        </div>
+        <div id="info"></div>
+		
+		<script>			
+									
+			/**
+			 * Create an overlay to anchor the popup to the map.
+			 */
+			var overlay = new ol.Overlay({
+			  element: container
+			});
+			
+			var container = document.getElementById('popup');
+			var content = document.getElementById('popup-content');
+			var closer = document.getElementById('popup-closer');
+			
+			/**
+			 * Add a click handler to hide the popup.
+			 * @return {boolean} Don't follow the href.
+			 */
+			closer.onclick = function() {
+			  container.style.display = 'none';
+			  closer.blur();
+			  return false;
+			};
+
+						
+			var map = new ol.Map({
+			  view: new ol.View({
+				center: [0, 0],
+				zoom: 1
+			  }),
+			  overlays: [overlay],
+			  layers: [				
+				
+				new ol.layer.Tile({
+				  source: new ol.source.XYZ({
+					  url: 'http://cara.amilna.com/tilep/index.php?z={z}&x={x}&y={y}&xml=world_style'
+				   })
+				})				
+			  ],
+			  target: 'map'
+			});
+			
+			//var ut2 = new ol.utfGrid({map:map,url:"http://cara.amilna.com/tilep/index.php?z={z}&x={x}&y={y}&xml=world_style&type=utf"});
+			var ut = new ol.utfGrid({url:"http://cara.amilna.com/tilep/index.php?z={z}&x={x}&y={y}&xml=world_style&type=utf"});																			
+									
+			ut.onMove = function(evt) {
+				var lonlat = ol.proj.transform(evt.coordinate,
+				  'EPSG:3857', 'EPSG:4326');								
+				
+				var data = [];
+				var utfGrids = evt.map.utfGrids;
+				
+				for (var g=0;g<utfGrids.length;g++)
+				{
+					var ug = utfGrids[g];
+					lonlat = ug.fixLonlat(lonlat);
+					d = ug.getData(lonlat);
+					data.push(d);								
+				}							
+				
+				var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+					evt.coordinate, 'EPSG:3857', 'EPSG:4326'));
+				
+				var text = "";
+				for (var d=0;d<data.length;d++) {					
+					if (data[d] != null)
+					{
+						text += data[d].NAME +" ("+data[d].ABBREV+") : "+data[d].POP_EST+"<br>";
+					}	  
+				}
+				var info = document.getElementById('info');
+				info.innerHTML = '<code>' + text +
+					  '</code><code>' + hdms +
+					  '</code>'
+					  ;
+			};	
+			
+			ut.addTo(map);			
+			
+			map.on('click', function(evt) {
+				var lonlat = ol.proj.transform(evt.coordinate,
+				  'EPSG:3857', 'EPSG:4326');								
+				
+				var data = ut.getData(ut.fixLonlat(lonlat));
+												
+				if (data != null)
+				{
+											
+					var popup = new ol.Overlay({
+					  element: document.getElementById('popup')
+					});
+					
+					popup.setPosition(evt.coordinate);
+					map.addOverlay(popup);
+													
+					overlay.setPosition(evt.coordinate);
+					  content.innerHTML = '<p>You clicked here:</p><code>' + lonlat +
+						  '</code> <code>' + data.NAME +" ("+data.ABBREV+") : "+data.POP_EST
+						  '</code>'
+						  ;
+					  container.style.display = 'block';
+				  
+				}
+				else
+				{
+					container.style.display = 'none';
+				}	    
+			});	
+			
+		</script>
+	</body>
+</html>
