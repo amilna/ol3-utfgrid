@@ -119,8 +119,8 @@ ol.utfGrid.prototype.fetch = function(evt)
 	{				
 		var ug = utfGrids[g];		
 		
-		min = ug.fixLonlat([ddbox[0],ddbox[3]]);
-		max = ug.fixLonlat([ddbox[2],ddbox[1]]);
+		min = ug.fixLonlat([ddbox[0],ddbox[1]]);
+		max = ug.fixLonlat([ddbox[2],ddbox[3]]);
 		ctr = ug.fixLonlat(ddctr);				
 		
 		if (ctr[0] < min[0] || ctr[0] > max[0])
@@ -148,7 +148,7 @@ ol.utfGrid.prototype.fetch = function(evt)
 			{
 				ug.data[zoom][x] = [];
 			}			
-			for(var y = g0[1];y<=g1[1];y++)
+			for(var y = g0[1];y>=g1[1];y--)
 			{											
 				if (!ug.isObj(ug.data[zoom][x][y]))
 				{															
@@ -167,7 +167,7 @@ ol.utfGrid.prototype.fetch = function(evt)
 			{
 				ug.data[zoom][x] = [];
 			}			
-			for(var y = Math.max(0,g2[1]);y<=g3[1];y++)
+			for(var y = Math.max(0,g2[1]);y>=g3[1];y--)
 			{											
 				if (!ug.isObj(ug.data[zoom][x][y]))
 				{															
@@ -180,7 +180,7 @@ ol.utfGrid.prototype.fetch = function(evt)
 				}
 			}	
 		}
-				
+		//console.log(tiles,min,max,ctr,g0,g1,g2,g3);		
 		for(var t = 0;t<tiles.length;t++)
 		{
 			var tile = tiles[t];			
